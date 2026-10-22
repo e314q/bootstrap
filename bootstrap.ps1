@@ -9,7 +9,7 @@
                       (Join-Path $env:USERPROFILE ".local\bin"), $env:Path) | Where-Object { $_ }) -join ";"
     }
     function Has($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
-    function Winget($id) {
+    function Install-App($id) {
         Write-Host "== install $id"
         winget install -e --id $id --source winget --accept-source-agreements --accept-package-agreements --silent
         Refresh-Path
@@ -17,8 +17,8 @@
 
     Refresh-Path
     if (-not (Has winget)) { throw "winget not found: install 'App Installer' from Microsoft Store and run again" }
-    if (-not (Has git)) { Winget Git.Git }
-    if (-not (Has gh)) { Winget GitHub.cli }
+    if (-not (Has git)) { Install-App Git.Git }
+    if (-not (Has gh)) { Install-App GitHub.cli }
     if (-not (Has claude)) { Write-Host "== install Claude Code"; Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression; Refresh-Path }
 
     cmd /c "gh auth status >nul 2>&1"
