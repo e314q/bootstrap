@@ -28,6 +28,13 @@
         if ($LASTEXITCODE -ne 0) { throw "GitHub login failed" }
     }
     gh auth setup-git  # git push/pull to private repos via gh's login
+    cmd /c "git config --global user.email >nul 2>&1"
+    if ($LASTEXITCODE -ne 0) {  # commit author: the GitHub login with its private noreply address
+        $login = gh api user --jq .login; $id = gh api user --jq .id
+        git config --global user.name $login
+        git config --global user.email "$id+$login@users.noreply.github.com"
+        Write-Host "== git author: $login <$id+$login@users.noreply.github.com>"
+    }
 
     $cfg = Join-Path $env:USERPROFILE ".claude"
     if (Test-Path (Join-Path $cfg ".git")) {
@@ -38,8 +45,14 @@
     }
     if ($LASTEXITCODE -ne 0) { throw "could not get e314q/claude-config" }
     powershell -ExecutionPolicy Bypass -File $restore
-    if ($LASTEXITCODE -ne 0) { throw "restore.ps1 failed" }
+    $ok = $LASTEXITCODE -eq 0
 
     Write-Host ""
-    Write-Host "Ready. Open a NEW PowerShell window and run: claude"
+    if ($ok) { Write-Host "Ready." -ForegroundColor Green }
+    else {
+        Write-Host "NOT everything is done: see the red NOT DONE lines above." -ForegroundColor Red
+        Write-Host "Usually a network hiccup: paste the same command again (safe, finished steps are skipped)." -ForegroundColor Red
+    }
+    # programs installed just now are on PATH only for terminals started after them (also new tabs of an old window)
+    Write-Host "Close ALL terminal windows, open a new PowerShell and run: claude"
 }
